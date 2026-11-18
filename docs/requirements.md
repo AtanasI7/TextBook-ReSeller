@@ -8,6 +8,7 @@ Nov 9, 2026 · @Atanas
 
 | Дата       | Промяна                                                                                     |
 |------------|---------------------------------------------------------------------------------------------|
+| 2026-11-18 | Отзивът се връзва към получена поръчка (Order), а не към разговор; ListingImage.order → sort_order |
 | 2026-11-17 | MVP: 1 поръчка = 1 обява (без количка); добавени модел Order, user stories и API за поръчки |
 | 2026-11-17 | Добавени плащане с наложен платеж и ценова прозрачност (от онлайн версията)                 |
 | 2026-11-09 | Първа версия                                                                                |
@@ -98,7 +99,7 @@ Nov 9, 2026 · @Atanas
 | Messaging      | Като купувач искам да пиша на продавача по конкретна обява                          | Must      |
 | Messaging      | Като потребител искам да получавам съобщенията в реално време                       | Should    |
 | Notifications  | Като потребител искам известие за ново съобщение (в приложението и по email)        | Should    |
-| Reviews        | Като купувач искам да оставя оценка на продавача след сделка                        | Should    |
+| Reviews        | Като купувач искам да оставя оценка на продавача след получена поръчка | Should    |
 | Moderation     | Като потребител искам да подам сигнал за неподходяща обява                          | Should    |
 | Moderation     | Като admin искам да преглеждам сигнали и да блокирам обяви или потребители          | Must      |
 | Orders         | Като купувач искам да поръчам учебник с наложен платеж, като въведа адрес и избера куриер | Must      |
@@ -111,7 +112,7 @@ Nov 9, 2026 · @Atanas
 
 - Продавач не може да пише сам на себе си и не може да оценява сам себе си.
 
-- Отзив може да се остави само веднъж на разговор и само от участник в него.
+- Отзив може да се остави само веднъж за поръчка, само от купувача и само когато поръчката е със статус „получена“.
 
 - Продадена обява остава видима 7 дни с етикет „Продадена“, после се скрива от търсенето.
 
@@ -182,12 +183,12 @@ Nginx разпределя трафика: обикновените заявки
 | City         | name                                                                                  | Справочник                                                                                                              |
 | Book         | isbn, title, author, publisher, year, grade, retail_price (цена като нов) | FK към Subject; isbn е unique, но nullable (стари учебници нямат ISBN)                                                  |
 | Listing      | price, condition, description, status, created_at, sold_at, is_deleted, search_vector | FK към User (продавач), Book, City; condition и status са TextChoices; GIN индекс върху search_vector; CHECK price > 0; price ≤ book.retail_price (проверява се в serializer-а) |
-| ListingImage | image, thumbnail, order                                                               | FK към Listing, максимум 5 на обява                                                                                     |
+| ListingImage | image, thumbnail, sort_order                                                           | FK към Listing, максимум 5 на обява                                                                                     |
 | Favorite     | created_at                                                                            | FK към User и Listing; unique (user, listing)                                                                           |
 | Conversation | created_at, updated_at                                                                | FK към Listing, buyer и seller; unique (listing, buyer)                                                                 |
 | Message      | body, created_at, read_at                                                             | FK към Conversation и sender; индекс по (conversation, created_at)                                                      |
 | Notification | type, payload (JSON), is_read                                                         | FK към User                                                                                                             |
-| Review       | rating (1–5), comment                                                                 | FK към reviewer и reviewee; unique към Conversation                                                                     |
+| Review       | rating (1–5), comment                                                                 | FK към Order, reviewer и reviewee; unique (order): един отзив на поръчка                                 |
 | Order        | delivery_address, courier, cod_amount, status, created_at, shipped_at                 | FK към Listing и buyer; courier и status са TextChoices; най-много една активна поръчка на обява; купувачът не може да е продавачът |
 | Report       | reason, status, resolved_by                                                           | FK към reporter и Listing                                                                                               |
 
@@ -218,7 +219,7 @@ API-то е REST, версионирано под /api/v1/, с JSON отгово
 | GET, POST          | /conversations/{id}/messages/                                                  | Съобщения в разговор                           | Участник                    |
 | WS                 | /ws/chat/{conversation_id}/                                                    | Real-time канал за чата                        | Участник                    |
 | GET, PATCH         | /notifications/                                                                | Известия, маркиране като прочетени             | Влязъл                      |
-| POST               | /reviews/                                                                      | Отзив за продавач                              | Участник в разговор         |
+| POST               | /reviews/                                                                      | Отзив за продавач                              | Купувач по получена поръчка |
 | GET, POST          | /orders/                                                                       | Мои поръчки (като купувач и продавач), нова поръчка | Влязъл                 |
 | PATCH              | /orders/{id}/                                                                  | Смяна на статус (изпратена, получена, отказана) | Купувач / продавач       |
 | POST               | /reports/                                                                      | Сигнал за обява                                | Влязъл                      |
