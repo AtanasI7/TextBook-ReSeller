@@ -1,0 +1,164 @@
+// TextBook ReSeller: модел на данните (MVP)
+// Постави този код в https://dbdiagram.io
+
+Table users {
+  id integer [pk, increment]
+  email varchar [unique, not null]
+  password varchar [not null, note: 'hash, никога чист текст']
+  is_verified boolean [default: false]
+  date_joined timestamp
+}
+
+Table profiles {
+  id integer [pk, increment]
+  user_id integer [unique, not null, ref: - users.id] // 1:1
+  display_name varchar
+  city_id integer [ref: > cities.id]
+  avatar varchar
+  rating_avg decimal
+}
+
+Table subjects {
+  id integer [pk, increment]
+  name varchar [not null]
+  slug varchar [unique]
+}
+
+Table cities {
+  id integer [pk, increment]
+  name varchar [unique, not null]
+}
+
+Table books {
+  id integer [pk, increment]
+  isbn varchar [unique, null, note: 'nullable: стари учебници нямат ISBN']
+  title varchar [not null]
+  author varchar
+  publisher varchar
+  year integer
+  grade varchar
+  retail_price decimal [note: 'цена като нов']
+  subject_id integer [ref: > subjects.id]
+}
+
+Enum listing_condition {
+  like_new
+  very_good
+  good
+  acceptable
+}
+
+Enum listing_status {
+  active
+  hidden
+  sold
+}
+
+Table listings {
+  id integer [pk, increment]
+  seller_id integer [not null, ref: > users.id]
+  book_id integer [not null, ref: > books.id]
+  city_id integer [ref: > cities.id]
+  price decimal [not null, note: 'CHECK price > 0; price <= book.retail_price']
+  condition listing_condition
+  description text
+  status listing_status [default: 'active']
+  created_at timestamp
+  sold_at timestamp [null]
+  is_deleted boolean [default: false, note: 'soft delete']
+}
+
+Table listing_images {
+  id integer [pk, increment]
+  listing_id integer [not null, ref: > listings.id]
+  image varchar
+  thumbnail varchar
+  sort_order integer [note: 'ред на снимката; максимум 5 на обява']
+}
+
+Table favorites {
+  id integer [pk, increment]
+  user_id integer [not null, ref: > users.id]
+  listing_id integer [not null, ref: > listings.id]
+  created_at timestamp
+
+  indexes {
+    (user_id, listing_id) [unique]
+  }
+}
+
+Enum courier {
+  econt
+  speedy
+}
+
+Enum order_status {
+  created
+  shipped
+  received
+  refused
+}
+
+Table orders {
+  id integer [pk, increment]
+  listing_id integer [not null, ref: > listings.id, note: '1 поръчка = 1 обява']
+  buyer_id integer [not null, ref: > users.id, note: 'buyer != listing.seller']
+  delivery_address text [not null]
+  courier courier
+  cod_amount decimal [note: 'сума за наложен платеж']
+  status order_status [default: 'created']
+  created_at timestamp
+  shipped_at timestamp [null]
+}
+
+Table conversations {
+  id integer [pk, increment]
+  listing_id integer [not null, ref: > listings.id]
+  buyer_id integer [not null, ref: > users.id]
+  seller_id integer [not null, ref: > users.id]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (listing_id, buyer_id) [unique]
+  }
+}
+
+Table messages {
+  id integer [pk, increment]
+  conversation_id integer [not null, ref: > conversations.id]
+  sender_id integer [not null, ref: > users.id]
+  body text [not null]
+  created_at timestamp
+  read_at timestamp [null]
+
+  indexes {
+    (conversation_id, created_at)
+  }
+}
+
+Table notifications {
+  id integer [pk, increment]
+  user_id integer [not null, ref: > users.id]
+  type varchar
+  payload json
+  is_read boolean [default: false]
+}
+
+Table reviews {
+  id integer [pk, increment]
+  order_id integer [unique, not null, ref: - orders.id, note: 'един отзив на поръчка, само при статус received']
+  reviewer_id integer [not null, ref: > users.id]
+  reviewee_id integer [not null, ref: > users.id]
+  rating integer [not null, note: '1–5']
+  comment text
+}
+
+Table reports {
+  id integer [pk, increment]
+  reporter_id integer [not null, ref: > users.id]
+  listing_id integer [not null, ref: > listings.id]
+  reason text
+  status varchar
+  resolved_by integer [null, ref: > users.id]
+}
