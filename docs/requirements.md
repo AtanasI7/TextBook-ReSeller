@@ -8,6 +8,7 @@ Nov 9, 2026 · @Atanas
 
 | Дата       | Промяна                                                                                     |
 |------------|---------------------------------------------------------------------------------------------|
+| 2026-11-20 | Етап 1 разделен на стъпки 1а–1г: само backend, PostgreSQL, линтери и CI; React, Redis и MinIO влизат в етапа, в който са нужни; без ADR |
 | 2026-11-18 | Отзивът се връзва към получена поръчка (Order), а не към разговор; ListingImage.order → sort_order |
 | 2026-11-17 | MVP: 1 поръчка = 1 обява (без количка); добавени модел Order, user stories и API за поръчки |
 | 2026-11-17 | Добавени плащане с наложен платеж и ценова прозрачност (от онлайн версията)                 |
@@ -254,31 +255,57 @@ API-то е REST, версионирано под /api/v1/, с JSON отгово
 
 - [ ] Wireframes на 6-те основни екрана във Figma или на хартия: начало/търсене, обява, създаване на обява, профил, разговори, вход
 
-- [ ] Първи ADR (Architecture Decision Record) за избора на стек
-
 **Definition of Done:** има backlog, ERD и wireframes в repo-то.
 
 ### Етап 1 — Основа на проекта и инфраструктура (1 седмица)
 
-Цел: празен, но професионално настроен проект, който се стартира с една команда.
+Цел: празен, но професионално настроен backend, който се стартира с една команда. Всяка технология влиза в етапа, в който е нужна: Redis в Етап 2, MinIO в Етап 3, React в първия етап с frontend задачи. Всяка стъпка е 1 issue + 1 branch + 1 PR.
 
-- [ ] Django проект с разделени settings (base, dev, prod) и django-environ
+**1а. Празен Django проект + health endpoint + първи тест**
 
-- [ ] Vite + React + TypeScript проект
+- [ ] Django 5 + Django REST Framework в backend/ (Python 3.12)
 
-- [ ] docker-compose.yml: backend, frontend, PostgreSQL, Redis, MinIO
+- [ ] GET /api/health/ връща {"status": "ok"}
 
-- [ ] pre-commit с ruff, black, ESLint, Prettier
+- [ ] pytest + pytest-django и тест за health endpoint-а
 
-- [ ] GitHub Actions: lint + тестове при всеки pull request
+DoD: runserver тръгва локално, /api/health/ връща 200, pytest минава.
 
-- [ ] /api/health/ endpoint и drf-spectacular документация
+**1б. PostgreSQL в Docker Compose + тайни извън кода**
 
-- [ ] README с инструкции за стартиране
+- [ ] docker-compose.yml с услуги db (PostgreSQL 16) и backend
 
-**Definition of Done:** docker compose up вдига всичко, CI е зелен.
+- [ ] django-environ, .env.example в repo-то, .env в .gitignore
+
+- [ ] Settings, разделени на base, dev и prod
+
+DoD: docker compose up вдига базата и backend-а, migrate минава върху PostgreSQL, тестовете минават срещу PostgreSQL, в Git няма тайни.
+
+**1в. Линтери и CI**
+
+- [ ] ruff + black, закачени в pre-commit
+
+- [ ] GitHub Actions при всеки pull request: lint + pytest с PostgreSQL service container
+
+- [ ] Защита на main: merge само през PR и при зелен CI
+
+DoD: CI е зелен на чист PR и червен при грешка във форматирането; в main не може да се push-ва директно.
+
+**1г. API документация + README**
+
+- [ ] drf-spectacular със Swagger UI на /api/docs/
+
+- [ ] README с инструкции за стартиране локално и с Docker
+
+DoD: /api/docs/ показва health endpoint-а; проектът се стартира само по инструкциите от README.
+
+**Definition of Done:** docker compose up вдига backend + PostgreSQL, /api/health/ и /api/docs/ работят, CI е зелен, main е защитен, README обяснява стартирането, всички issues на етапа са затворени през merge-нати PR-и.
 
 ### Етап 2 — Потребители и автентикация (2 седмици)
+
+- [ ] Redis в docker-compose.yml и Celery worker (за email-ите)
+
+- [ ] Vite + React + TypeScript проект в frontend/, ESLint + Prettier в pre-commit и CI
 
 - [ ] Custom User модел от първия ден (email вместо username), Profile
 
@@ -301,6 +328,8 @@ API-то е REST, версионирано под /api/v1/, с JSON отгово
 - [ ] CRUD API с permissions за собственик, soft delete, mark-sold
 
 - [ ] Модел Order и API за поръчка с наложен платеж (1 поръчка = 1 обява); обявата става „Продадена“ при получена поръчка
+
+- [ ] MinIO в docker-compose.yml като S3-compatible storage за локална разработка
 
 - [ ] Качване на снимки в S3-compatible storage, валидация, thumbnails в Celery
 
@@ -422,8 +451,6 @@ API-то е REST, версионирано под /api/v1/, с JSON отгово
 - README.md — какво е, как се стартира, линк към demo
 
 - docs/architecture.md — диаграма и описание на компонентите
-
-- docs/adr/ — записи за важните технически решения
 
 - CONTRIBUTING.md и .env.example
 
