@@ -34,7 +34,7 @@ ALLOWED_HOSTS = []
 # Application definition
 
 PROJECT_APPS = [
-    
+    'core'
 ]
 
 INSTALLED_APPS = [
@@ -45,7 +45,6 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
-    'core'
 
 ] + PROJECT_APPS
 
