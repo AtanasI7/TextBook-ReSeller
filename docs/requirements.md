@@ -8,6 +8,7 @@ Nov 9, 2026 · @Atanas
 
 | Дата       | Промяна                                                                                     |
 |------------|---------------------------------------------------------------------------------------------|
+| 2026-11-22 | Python 3.13 instead of 3.12 |
 | 2026-11-20 | Етап 1 разделен на стъпки 1а–1г: само backend, PostgreSQL, линтери и CI; React, Redis и MinIO влизат в етапа, в който са нужни; без ADR |
 | 2026-11-18 | Отзивът се връзва към получена поръчка (Order), а не към разговор; ListingImage.order → sort_order |
 | 2026-11-17 | MVP: 1 поръчка = 1 обява (без количка); добавени модел Order, user stories и API за поръчки |
@@ -148,7 +149,7 @@ Nov 9, 2026 · @Atanas
 
 | Слой             | Технология                                                                                     | Защо                                                                                              |
 |------------------|------------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------|
-| Backend          | Python 3.12, Django 5, Django REST Framework                                                   | Вграден ORM, admin панел, автентикация и миграции; DRF дава serializers, permissions и pagination |
+| Backend          | Python 3.13, Django 5, Django REST Framework                                                   | Вграден ORM, admin панел, автентикация и миграции; DRF дава serializers, permissions и pagination |
 | База данни       | PostgreSQL 16                                                                                  | Full-text search, pg_trgm, JSON полета, транзакции                                                |
 | Real-time        | Django Channels + Redis                                                                        | WebSockets за чата и известията без отделен сървър на друг език                                   |
 | Фонови задачи    | Celery + Redis                                                                                 | Email-и, thumbnails, известия за запазени търсения                                                |
@@ -263,7 +264,7 @@ API-то е REST, версионирано под /api/v1/, с JSON отгово
 
 **1а. Празен Django проект + health endpoint + първи тест**
 
-- [ ] Django 5 + Django REST Framework в backend/ (Python 3.12)
+- [ ] Django 5 + Django REST Framework в backend/ (Python 3.13)
 
 - [ ] GET /api/health/ връща {"status": "ok"}
 
