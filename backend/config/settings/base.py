@@ -28,9 +28,7 @@ ALLOWED_HOSTS = env.list("ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
 # Application definition
 
-PROJECT_APPS = [
-    "core",
-]
+PROJECT_APPS = ["core"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
